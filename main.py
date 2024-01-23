@@ -10,10 +10,10 @@ def main():
     o = Obfuscator(code)
     with open("dst.py", "w", encoding="utf-8") as f:
         f.write(o.obfuscate())
-    print(o.alias_asname)
-    print(o.defined_functions)
-    print(o.encrypted_constants)
-    print(o.encrypt_dict)
+    # print(o.alias_asname)
+    # print(o.defined_functions)
+    # print(o.encrypted_constants)
+    # print(o.encrypt_dict)
     # print(o.convert_to_bin_name("abc"))
 
 

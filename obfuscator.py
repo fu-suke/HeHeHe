@@ -1,6 +1,8 @@
-from _ast import Constant, ExceptHandler, Mod, Module
+from _ast import Constant, ExceptHandler, Module
 import ast
 from typing import Any
+import random
+import math
 
 INTEGER_MASK = 1234567890
 FLOAT_MASK = 5432160987
@@ -23,16 +25,14 @@ class Obfuscator(ast.NodeTransformer):
 
     def obfuscate(self):
         self.visit(self.tree)
-        print(ast.dump(self.tree, indent=4))
+        # print(ast.dump(self.tree, indent=4))
         return ast.unparse(self.tree)
 
     def visit_Module(self, node: Module) -> Any:
         super().generic_visit(node)
-        # このinsertは成功する
-        node.body.insert(0, ast.parse("print('Hello, world!')").body[0])
         # 定数を復号する処理を追加
         for k, v in self.encrypt_dict.items():
-            n = self.create_decrypt_function(k, v[0], v[1])
+            n = create_decrypt_function(k, v[0], v[1])
             if not n:
                 continue
             node.body.insert(0, n)  # これが失敗する模様
@@ -50,11 +50,14 @@ class Obfuscator(ast.NodeTransformer):
 
             # 引数の変数名を変更する処理
             args = node.args
-            for arg in args:
+            for i, arg in enumerate(args):
                 if isinstance(arg, ast.Name):
                     arg.id = self.encrypt_strings(arg.id)
                 elif isinstance(arg, ast.Call):
                     self.visit_Call(arg)
+                elif isinstance(arg, ast.Constant):
+                    print("visit_Constant: ", arg.value, type(arg.value))
+                    args[i] = self.visit_Constant(arg)
                 else:
                     self.generic_visit(arg)
             return node
@@ -118,7 +121,7 @@ class Obfuscator(ast.NodeTransformer):
         self.generic_visit(node)
         return node
 
-    def visit_Constant(self, node: Constant) -> Any:
+    def visit_Constant(self, node: ast.Constant) -> Any:
         # print("visit_Constant: ", node.value, type(node.value))
         encrypted_constant = self.encrypt_const(node)
         node = ast.Call(func=ast.Name(id=encrypted_constant, ctx=ast.Load()),
@@ -142,8 +145,8 @@ class Obfuscator(ast.NodeTransformer):
             for b in binary:
                 if b == "b":
                     continue
-                new_name += ("0" if b == "0" else "O")
-        return "O" + new_name
+                new_name += ("M" if b == "0" else "W")
+        return "" + new_name
 
     def encrypt_const(self, node: ast.Constant) -> Any:
         import struct
@@ -163,54 +166,63 @@ class Obfuscator(ast.NodeTransformer):
         else:
             raise ValueError(f"Unknown type: {type(node.value)}")
 
-        new_name = self.convert_to_bin_name(value)
+        new_name = convert_to_bin_name(value)
         if node.value not in self.encrypt_dict:
             self.encrypt_dict[new_name] = [node.value, const_type]
         return new_name
 
-    def convert_to_bin_name(self, data):
-        assert (isinstance(data, int) or isinstance(data, str))
-        if isinstance(data, str):
-            data = data.encode()
-            binary = ""
-            for hex in data:
-                binary += bin(hex)[2:]
-        else:
-            binary = bin(data)
-        new_name = ""
-        for b in binary:
-            if b == "b":
-                continue
-            new_name += ("へ" if b == "0" else "ヘ")
-        return new_name
 
-    def revert_bin_to_data(self, bin, is_str):
-        pass
+def create_decrypt_function(encrypted_value, original_value, const_type):
+    n = ast.FunctionDef(name=encrypted_value, args=ast.arguments(
+        posonlyargs=[], args=[], kwonlyargs=[], kw_defaults=[], defaults=[]), body=[], decorator_list=[])
+    n.lineno = 3
+    n.col_offset = 0
 
-    def create_decrypt_function(self, encrypted_value, original_value, const_type):
-        n = ast.FunctionDef(name=encrypted_value, args=ast.arguments(
-            posonlyargs=[], args=[], kwonlyargs=[], kw_defaults=[], defaults=[]), body=[], decorator_list=[])
-        n.lineno = 3
-        n.col_offset = 0
-
-        if const_type == str:
-            n.body.append(
-                ast.parse(f"return {generate_code_for_string(original_value)}").body[0])
-            return n
-        n.body.append(ast.parse("return 'integer'").body[0])
+    if const_type == str:
+        n.body.append(
+            ast.parse(generate_code_for_string(original_value)).body[0])
         return n
-        # if const_type == str:
-        #     n.body.append(ast.parse(
-        #         f"bin_str = {encrypted_value}\nbinary_str = ''.join('0' if char == 'へ' else '1' for char in bin_str)\nreturn int(binary_str, 2).to_bytes((len(binary_str) + 7) // 8, byteorder='big')").body[0:3])
-        # elif const_type == int:
-        #     n.body.append(ast.parse("return 'integer'").body[0])
-        # elif const_type == float:
-        #     n.body.append(ast.parse("return 'float'").body[0])
-        # elif const_type == bool:
-        #     n.body.append(ast.parse("return 'boolean'").body[0])
-        # else:
-        #     raise ValueError(f"Unknown type: {type(const_type)}")
-        # return n
+    elif const_type == int:
+        n.body.append(
+            ast.parse(generate_code_for_integer(original_value)).body[0])
+        return n
+    elif const_type == float:
+        n.body.append(
+            ast.parse(generate_code_for_float(original_value)).body[:2])
+        return n
+    elif const_type == bool:
+        n.body.append(
+            ast.parse(generate_code_for_integer(original_value)).body[0])
+        return n
+    # if const_type == str:
+    #     n.body.append(ast.parse(
+    #         f"bin_str = {encrypted_value}\nbinary_str = ''.join('0' if char == 'へ' else '1' for char in bin_str)\nreturn int(binary_str, 2).to_bytes((len(binary_str) + 7) // 8, byteorder='big')").body[0:3])
+    # elif const_type == int:
+    #     n.body.append(ast.parse("return 'integer'").body[0])
+    # elif const_type == float:
+    #     n.body.append(ast.parse("return 'float'").body[0])
+    # elif const_type == bool:
+    #     n.body.append(ast.parse("return 'boolean'").body[0])
+    # else:
+    #     raise ValueError(f"Unknown type: {type(const_type)}")
+    # return n
+
+
+def convert_to_bin_name(data):
+    assert (isinstance(data, int) or isinstance(data, str))
+    if isinstance(data, str):
+        data = data.encode()
+        binary = ""
+        for hex in data:
+            binary += bin(hex)[2:]
+    else:
+        binary = bin(data)
+    new_name = ""
+    for b in binary:
+        if b == "b":
+            continue
+        new_name += ("ぽ" if b == "0" else "ヘ")
+    return new_name
 
 
 def generate_code_for_string(input_str):
@@ -224,4 +236,37 @@ def generate_code_for_string(input_str):
 
     # 文字列を連結して完全なプログラムを作成
     program = " + ".join(program_parts)
+    return "return " + program
+
+
+def generate_code_for_integer(num):
+    # 複数のランダムな大きな数を生成
+    num1 = random.randint(100000, 999999)
+    num2 = random.randint(100000, 999999)
+    num3 = random.randint(100000, 999999)
+
+    # 複雑な計算を行う
+    step1 = num ^ num1
+    step2 = step1 + num2
+    step3 = step2 - num3
+
+    # 元の数に戻すための計算を行うコードを生成
+    program = f"(({step3} + {num3} - {num2}) ^ {num1})"
+    return "return " + program
+
+
+def generate_code_for_float(num):
+    # 浮動小数点数の仮数部と指数部を取得
+    mantissa, exponent = math.frexp(num)
+    exponent = exponent - 1  # 調整
+
+    # 2の累乗の数をランダムに生成
+    power_of_two = 2 ** random.randint(20, 30)
+
+    # 仮数部と指数部に対する計算を生成
+    mantissa_calc = f"({mantissa} * {power_of_two}) / {power_of_two}"
+    exponent_calc = f"({exponent} + 1)"
+
+    # 元の浮動小数点数を再構築するコードを生成
+    program = f"import math\nreturn math.ldexp({mantissa_calc}, {exponent_calc})"
     return program
