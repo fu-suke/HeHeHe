@@ -49,19 +49,18 @@ class Obfuscator(ast.NodeTransformer):
                 node.func.id = self.encrypt_strings(node.func.id)
 
             # 引数の変数名を変更する処理
-            args = node.args
-            for i, arg in enumerate(args):
+            for i, arg in enumerate(node.args):
                 if isinstance(arg, ast.Name):
                     arg.id = self.encrypt_strings(arg.id)
                 elif isinstance(arg, ast.Call):
                     self.visit_Call(arg)
                 elif isinstance(arg, ast.Constant):
-                    args[i] = self.visit_Constant(arg)
+                    node.args[i] = self.visit_Constant(arg)
                 elif isinstance(arg, ast.Attribute):
                     self.visit_Attribute(arg)
                 elif isinstance(arg, ast.JoinedStr):
                     for j, v in enumerate(arg.values):
-                        self.generic_visit(v)
+                        node.args[i].values[j] = self.generic_visit(v)
                 else:
                     self.generic_visit(arg)
             return node
@@ -154,6 +153,7 @@ class Obfuscator(ast.NodeTransformer):
 
     def encrypt_const(self, value) -> Any:
         import struct
+        original_value = value
         self.encrypted_constants.add(value)
         const_type = type(value)
         if const_type == str:
@@ -171,7 +171,7 @@ class Obfuscator(ast.NodeTransformer):
 
         new_name = convert_to_bin_name(value)
         if value not in self.encrypt_dict:
-            self.encrypt_dict[new_name] = [value, const_type]
+            self.encrypt_dict[new_name] = [original_value, const_type]
         return new_name
 
 
@@ -180,6 +180,7 @@ def create_decrypt_function(encrypted_value, original_value, const_type):
         posonlyargs=[], args=[], kwonlyargs=[], kw_defaults=[], defaults=[]), body=[], decorator_list=[])
     n.lineno = 3
     n.col_offset = 0
+    print("original_value: ", original_value, type(original_value))
 
     if const_type == str:
         n.body.append(

@@ -1,3 +1,4 @@
-A = 3
 
-print(f"{1}ほげほげ{A}ふがふが！")
+print(1)
+print(True)
+print("1")
