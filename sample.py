@@ -1,36 +1,20 @@
-from cryptography.fernet import Fernet
-import base64
+def generate_code_for_string(input_str):
+    program_parts = []
+    for char in input_str:
+        char_code = ord(char)
+        # ここで文字コードを隠蔽するための計算を行う
+        # 例: char_codeを2で割った値に2を足して再び2を掛ける（元の値に戻る）
+        masked_code = f"(int({char_code} / 2 * 2))"
+        program_parts.append(f"chr({masked_code})")
 
-# 鍵の生成
-key = Fernet.generate_key()
-cipher_suite = Fernet(key)
-
-
-def encrypt_value(value):
-    """ 値を暗号化して文字列に変換する関数 """
-    # 値を文字列に変換
-    if not isinstance(value, str):
-        value = str(value)
-    # 暗号化
-    encrypted_value = cipher_suite.encrypt(value.encode())
-    # Base64エンコードして変数名として使用可能な形式にする
-    return base64.urlsafe_b64encode(encrypted_value).decode('utf-8')
+    # 文字列を連結して完全なプログラムを作成
+    program = " + ".join(program_parts)
+    return program
 
 
-def decrypt_value(encrypted_value):
-    """ 暗号化された文字列を復号して元の値に戻す関数 """
-    # Base64デコード
-    encrypted_value = base64.urlsafe_b64decode(encrypted_value)
-    # 復号
-    decrypted_value = cipher_suite.decrypt(encrypted_value).decode('utf-8')
-    return decrypted_value
+# 例
+input_str = "abcde"
+output_program = generate_code_for_string(input_str)
+print(output_program)  # 出力例: chr((97 // 2 + 2) * 2)
 
-
-# テスト
-original_value = "Hello, world!"
-encrypted = encrypt_value(original_value)
-decrypted = decrypt_value(encrypted)
-
-print("Original:", original_value)
-print("Encrypted:", encrypted)
-print("Decrypted:", decrypted)
+exec("print(" + output_program + ")")

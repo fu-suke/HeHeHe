@@ -32,7 +32,7 @@ class Obfuscator(ast.NodeTransformer):
         node.body.insert(0, ast.parse("print('Hello, world!')").body[0])
         # 定数を復号する処理を追加
         for k, v in self.encrypt_dict.items():
-            n = self.create_decrypt_function(k, v)
+            n = self.create_decrypt_function(k, v[0], v[1])
             if not n:
                 continue
             node.body.insert(0, n)  # これが失敗する模様
@@ -165,8 +165,7 @@ class Obfuscator(ast.NodeTransformer):
 
         new_name = self.convert_to_bin_name(value)
         if node.value not in self.encrypt_dict:
-            self.encrypt_dict[new_name] = const_type
-
+            self.encrypt_dict[new_name] = [node.value, const_type]
         return new_name
 
     def convert_to_bin_name(self, data):
@@ -185,20 +184,44 @@ class Obfuscator(ast.NodeTransformer):
             new_name += ("へ" if b == "0" else "ヘ")
         return new_name
 
-    def create_decrypt_function(self, name, const_type):
-        n = ast.FunctionDef(name=name, args=ast.arguments(
+    def revert_bin_to_data(self, bin, is_str):
+        pass
+
+    def create_decrypt_function(self, encrypted_value, original_value, const_type):
+        n = ast.FunctionDef(name=encrypted_value, args=ast.arguments(
             posonlyargs=[], args=[], kwonlyargs=[], kw_defaults=[], defaults=[]), body=[], decorator_list=[])
-        n.lineno = 1
+        n.lineno = 3
         n.col_offset = 0
 
         if const_type == str:
-            n.body.append(ast.parse(f"return 'strings'").body[0])
-        elif const_type == int:
-            n.body.append(ast.parse("return 'integer'").body[0])
-        elif const_type == float:
-            n.body.append(ast.parse("return 'float'").body[0])
-        elif const_type == bool:
-            n.body.append(ast.parse("return 'boolean'").body[0])
-        else:
-            raise ValueError(f"Unknown type: {type(const_type)}")
+            n.body.append(
+                ast.parse(f"return {generate_code_for_string(original_value)}").body[0])
+            return n
+        n.body.append(ast.parse("return 'integer'").body[0])
         return n
+        # if const_type == str:
+        #     n.body.append(ast.parse(
+        #         f"bin_str = {encrypted_value}\nbinary_str = ''.join('0' if char == 'へ' else '1' for char in bin_str)\nreturn int(binary_str, 2).to_bytes((len(binary_str) + 7) // 8, byteorder='big')").body[0:3])
+        # elif const_type == int:
+        #     n.body.append(ast.parse("return 'integer'").body[0])
+        # elif const_type == float:
+        #     n.body.append(ast.parse("return 'float'").body[0])
+        # elif const_type == bool:
+        #     n.body.append(ast.parse("return 'boolean'").body[0])
+        # else:
+        #     raise ValueError(f"Unknown type: {type(const_type)}")
+        # return n
+
+
+def generate_code_for_string(input_str):
+    program_parts = []
+    for char in input_str:
+        char_code = ord(char)
+        # ここで文字コードを隠蔽するための計算を行う
+        # 例: char_codeを2で割った値に2を足して再び2を掛ける（元の値に戻る）
+        masked_code = f"(int({char_code} / 2 * 2))"
+        program_parts.append(f"chr({masked_code})")
+
+    # 文字列を連結して完全なプログラムを作成
+    program = " + ".join(program_parts)
+    return program
