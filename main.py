@@ -13,6 +13,7 @@ def main():
     print(o.alias_asname)
     print(o.defined_functions)
     print(o.encrypted_constants)
+    print(o.encrypt_dict)
     # print(o.convert_to_bin_name("abc"))
 
 

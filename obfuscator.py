@@ -16,29 +16,29 @@ class Obfuscator(ast.NodeTransformer):
         self.alias_asname = []
         self.defined_functions = []
         self.exceptions = ["self"]  # 例外として変数名を変更しないもの
-        self.encrypted_constants = []
+        self.encrypted_constants = set()  # 暗号化された定数たち
+        self.encrypt_dict = {}
         print(ast.dump(self.tree, indent=4))
+        print("=====================================")
 
     def obfuscate(self):
         self.visit(self.tree)
         print(ast.dump(self.tree, indent=4))
         return ast.unparse(self.tree)
 
-    # def visit(self, node):
-    #     if hasattr(node, "parent"):
-    #         self.parent = node
-
-    #     for child in ast.iter_child_nodes(node):
-    #         child.parent = node
-    #         self.visit(child)
-
     def visit_Module(self, node: Module) -> Any:
         super().generic_visit(node)
+        # このinsertは成功する
         node.body.insert(0, ast.parse("print('Hello, world!')").body[0])
+        # 定数を復号する処理を追加
+        for k, v in self.encrypt_dict.items():
+            n = self.create_decrypt_function(k, v)
+            if not n:
+                continue
+            node.body.insert(0, n)  # これが失敗する模様
         return node
 
     def visit_Call(self, node: ast.Call) -> Any:
-        print("visit_Call")
         # 通常の関数呼び出し（Atrribute呼び出しは除く）
         if isinstance(node.func, ast.Name):
             # def で定義された関数の場合は変数名を変更する
@@ -147,31 +147,27 @@ class Obfuscator(ast.NodeTransformer):
 
     def encrypt_const(self, node: ast.Constant) -> Any:
         import struct
-        print(node.value, type(node.value))
-        integer = 0
-        if type(node.value) == str:
-            new_name = self.convert_to_bin_name(node.value)
-            self.encrypted_constants.append({new_name: str})
-            return new_name
-        elif type(node.value) == int:
-            integer = node.value ^ INTEGER_MASK
-            new_name = self.convert_to_bin_name(integer)
-            self.encrypted_constants.append({new_name: int})
-            return new_name
-        elif type(node.value) == float:
+        self.encrypted_constants.add(node.value)
+        value = node.value
+        const_type = type(value)
+        if const_type == str:
+            pass
+        elif const_type == int:
+            value = node.value ^ INTEGER_MASK
+        elif const_type == float:
             # 浮動小数点数をビット表現に変換し、整数として解釈
-            integer = struct.unpack('!I', struct.pack('!f', node.value))[
+            value = struct.unpack('!I', struct.pack('!f', node.value))[
                 0] ^ FLOAT_MASK
-            new_name = self.convert_to_bin_name(integer)
-            self.encrypted_constants.append({new_name: float})
-            return new_name
-        elif type(node.value) == bool:
-            integer = int(node.value) ^ BOOLEAN_MASK
-            new_name = self.convert_to_bin_name(integer)
-            self.encrypted_constants.append({new_name: bool})
-            return new_name
+        elif const_type == bool:
+            value = node.value ^ BOOLEAN_MASK
         else:
             raise ValueError(f"Unknown type: {type(node.value)}")
+
+        new_name = self.convert_to_bin_name(value)
+        if node.value not in self.encrypt_dict:
+            self.encrypt_dict[new_name] = const_type
+
+        return new_name
 
     def convert_to_bin_name(self, data):
         assert (isinstance(data, int) or isinstance(data, str))
@@ -188,3 +184,21 @@ class Obfuscator(ast.NodeTransformer):
                 continue
             new_name += ("へ" if b == "0" else "ヘ")
         return new_name
+
+    def create_decrypt_function(self, name, const_type):
+        n = ast.FunctionDef(name=name, args=ast.arguments(
+            posonlyargs=[], args=[], kwonlyargs=[], kw_defaults=[], defaults=[]), body=[], decorator_list=[])
+        n.lineno = 1
+        n.col_offset = 0
+
+        if const_type == str:
+            n.body.append(ast.parse(f"return 'strings'").body[0])
+        elif const_type == int:
+            n.body.append(ast.parse("return 'integer'").body[0])
+        elif const_type == float:
+            n.body.append(ast.parse("return 'float'").body[0])
+        elif const_type == bool:
+            n.body.append(ast.parse("return 'boolean'").body[0])
+        else:
+            raise ValueError(f"Unknown type: {type(const_type)}")
+        return n
