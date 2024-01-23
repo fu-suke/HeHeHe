@@ -56,8 +56,12 @@ class Obfuscator(ast.NodeTransformer):
                 elif isinstance(arg, ast.Call):
                     self.visit_Call(arg)
                 elif isinstance(arg, ast.Constant):
-                    print("visit_Constant: ", arg.value, type(arg.value))
                     args[i] = self.visit_Constant(arg)
+                elif isinstance(arg, ast.Attribute):
+                    self.visit_Attribute(arg)
+                elif isinstance(arg, ast.JoinedStr):
+                    for j, v in enumerate(arg.values):
+                        self.generic_visit(v)
                 else:
                     self.generic_visit(arg)
             return node
@@ -123,7 +127,7 @@ class Obfuscator(ast.NodeTransformer):
 
     def visit_Constant(self, node: ast.Constant) -> Any:
         # print("visit_Constant: ", node.value, type(node.value))
-        encrypted_constant = self.encrypt_const(node)
+        encrypted_constant = self.encrypt_const(node.value)
         node = ast.Call(func=ast.Name(id=encrypted_constant, ctx=ast.Load()),
                         args=[], keywords=[])
         return node
@@ -148,27 +152,26 @@ class Obfuscator(ast.NodeTransformer):
                 new_name += ("M" if b == "0" else "W")
         return "" + new_name
 
-    def encrypt_const(self, node: ast.Constant) -> Any:
+    def encrypt_const(self, value) -> Any:
         import struct
-        self.encrypted_constants.add(node.value)
-        value = node.value
+        self.encrypted_constants.add(value)
         const_type = type(value)
         if const_type == str:
             pass
         elif const_type == int:
-            value = node.value ^ INTEGER_MASK
+            value = value ^ INTEGER_MASK
         elif const_type == float:
             # 浮動小数点数をビット表現に変換し、整数として解釈
-            value = struct.unpack('!I', struct.pack('!f', node.value))[
+            value = struct.unpack('!I', struct.pack('!f', value))[
                 0] ^ FLOAT_MASK
         elif const_type == bool:
-            value = node.value ^ BOOLEAN_MASK
+            value = value ^ BOOLEAN_MASK
         else:
-            raise ValueError(f"Unknown type: {type(node.value)}")
+            raise ValueError(f"Unknown type: {type(value)}")
 
         new_name = convert_to_bin_name(value)
-        if node.value not in self.encrypt_dict:
-            self.encrypt_dict[new_name] = [node.value, const_type]
+        if value not in self.encrypt_dict:
+            self.encrypt_dict[new_name] = [value, const_type]
         return new_name
 
 
