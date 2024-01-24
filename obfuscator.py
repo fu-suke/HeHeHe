@@ -21,6 +21,7 @@ class Obfuscator(ast.NodeTransformer):
         self.modules = []
         self.alias_asname = []
         self.defined_functions = []
+        self.defined_attributes = []
         self.exceptions = ["self"]  # 例外として変数名を変更しないもの
         self.encrypted_constants = set()  # 暗号化された定数たち
         self.encrypt_dict = {}
@@ -139,11 +140,17 @@ class Obfuscator(ast.NodeTransformer):
 
     def visit_Attribute(self, node: ast.Attribute) -> Any:
         if isinstance(node.value, ast.Name):
+            # このノードが代入の左辺値の場合は、defiend_attributes に追加する
+            if isinstance(node.ctx, ast.Store):
+                self.defined_attributes.append(node.attr)
             # self.~~ の場合は~~を変更する
             if node.value.id == "self":
                 node.attr = self.encrypt_strings(node.attr)
             # a.method() の場合は method が defiend_functions に含まれているかを確認する
             elif node.attr in self.defined_functions:
+                node.attr = self.encrypt_strings(node.attr)
+            # a.attr の場合は attr が defined_attributes に含まれているかを確認する
+            elif node.attr in self.defined_attributes:
                 node.attr = self.encrypt_strings(node.attr)
         self.generic_visit(node)
         return node
@@ -200,7 +207,7 @@ class Obfuscator(ast.NodeTransformer):
         if name.startswith("__"):
             return name
 
-        return name[::-1]
+        # return name[::-1]
         name = name.encode()
         new_name = ""
         for hex in name:
@@ -265,7 +272,7 @@ def create_decrypt_function(encrypted_value, original_value, const_type):
 def convert_to_bin_name(data):
     assert (isinstance(data, int) or isinstance(data, str))
     if isinstance(data, str):
-        return data[::-1]
+        # return data[::-1]
         data = data.encode()
         binary = ""
         for hex in data:

@@ -1,6 +1,20 @@
-def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
-    # 型アノテーションのみの場合（実際の値がない場合）、ノードを削除
-    if node.value is None:
-        return None
-    # それ以外の場合は、通常通りノードを処理
-    return self.generic_visit(node)
+class Sample:
+    def __init__(self) -> None:
+        self.name, self.id = "honi", 1
+
+    def get_name(self):
+        return self.name
+
+
+class SampleEX:
+    def __init__(self) -> None:
+        s = Sample()
+        self.abc = s.get_name()
+        self.d = s.id
+
+
+s = SampleEX()
+print(s.abc, s.d)
+
+s.xyz = 123
+print(s.xyz)
