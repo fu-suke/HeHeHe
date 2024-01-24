@@ -24,9 +24,9 @@ class Obfuscator(ast.NodeTransformer):
         print("=====================================")
 
     def obfuscate(self):
-        self.visit(self.tree)
+        new_tree = self.visit(self.tree)
         # print(ast.dump(self.tree, indent=4))
-        return ast.unparse(self.tree)
+        return ast.unparse(new_tree)
 
     def visit_Module(self, node: Module) -> Any:
         super().generic_visit(node)
@@ -41,35 +41,51 @@ class Obfuscator(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> Any:
         # 通常の関数呼び出し（Atrribute呼び出しは除く）
         if isinstance(node.func, ast.Name):
+            tmp = None
             # def で定義された関数の場合は変数名を変更する
             if node.func.id in self.defined_functions:
-                node.func.id = self.encrypt_strings(node.func.id)
+                n = self.visit(node.func)
+                tmp = ast.Name(id=n.id, ctx=ast.Load())
             #  import でインポートされた、エイリアスのある関数名の場合は名前を変更する
-            if node.func.id in self.alias_asname:
-                node.func.id = self.encrypt_strings(node.func.id)
+            elif node.func.id in self.alias_asname:
+                n = self.visit(node.func)
+                tmp = ast.Name(id=n.id, ctx=ast.Load())
+            else:
+                # 元の関数名を保持したノードを作成する
+                tmp = ast.Name(id=node.func.id, ctx=ast.Load())
 
-            # 引数の変数名を変更する処理
-            for i, arg in enumerate(node.args):
-                if isinstance(arg, ast.Name):
-                    arg.id = self.encrypt_strings(arg.id)
-                elif isinstance(arg, ast.Call):
-                    self.visit_Call(arg)
-                elif isinstance(arg, ast.Constant):
-                    node.args[i] = self.visit_Constant(arg)
-                elif isinstance(arg, ast.Attribute):
-                    self.visit_Attribute(arg)
-                elif isinstance(arg, ast.JoinedStr):
-                    for j, v in enumerate(arg.values):
-                        node.args[i].values[j] = self.generic_visit(v)
-                else:
-                    self.generic_visit(arg)
+            # 引数などのノードを変更する
+            self.generic_visit(node)
+            # 関数名の復元
+            node.func = tmp
+
+            return node
+            # print("node.args: ", node.args)
+            # # 引数の変数名を変更する処理
+            # for i, arg in enumerate(node.args):
+            #     node.args[i] = self.visit(arg)
+            # if isinstance(arg, ast.Name):
+            #     # arg.id = self.encrypt_strings(arg.id)
+            #     # pass
+            #     # self.visit_Name(arg)
+            #     self.visit(arg)
+            # elif isinstance(arg, ast.Call):
+            #     self.visit_Call(arg)
+            # elif isinstance(arg, ast.Constant):
+            #     node.args[i] = self.visit_Constant(arg)
+            # elif isinstance(arg, ast.Attribute):
+            #     self.visit_Attribute(arg)
+            # elif isinstance(arg, ast.JoinedStr):
+            #     for j, v in enumerate(arg.values):
+            #         node.args[i].values[j] = self.generic_visit(v)
+            # else:
+            #     self.generic_visit(arg)
             return node
 
         # Attribute呼び出しの場合
         return self.generic_visit(node)
 
     def visit_Name(self, node: ast.Name) -> Any:
-        # node.id = node.id[::-1]
         node.id = self.encrypt_strings(node.id)
 
         return node
@@ -131,6 +147,16 @@ class Obfuscator(ast.NodeTransformer):
                         args=[], keywords=[])
         return node
 
+    def visit_JoinedStr(self, node: ast.JoinedStr) -> Any:
+        self.generic_visit(node)
+        for i, child in enumerate(node.values):
+            # f-strings内のvisit_Constant で関数呼び出しに置換されているので、それをFormattedValueでラップする
+            # JoninedStrのvaluesにはConstantとFormattedValueしか存在できない
+            if isinstance(child, ast.Call):
+                node.values[i] = ast.FormattedValue(
+                    value=child, conversion=-1)
+        return node
+
     def encrypt_strings(self, name: str) -> str:
         assert isinstance(name, str)
         if name in self.modules:
@@ -139,7 +165,7 @@ class Obfuscator(ast.NodeTransformer):
             return name
         if name.startswith("__"):
             return name
-
+        # return name[::-1]
         name = name.encode()
         new_name = ""
         for hex in name:
@@ -180,7 +206,6 @@ def create_decrypt_function(encrypted_value, original_value, const_type):
         posonlyargs=[], args=[], kwonlyargs=[], kw_defaults=[], defaults=[]), body=[], decorator_list=[])
     n.lineno = 3
     n.col_offset = 0
-    print("original_value: ", original_value, type(original_value))
 
     if const_type == str:
         n.body.append(
@@ -198,23 +223,14 @@ def create_decrypt_function(encrypted_value, original_value, const_type):
         n.body.append(
             ast.parse(generate_code_for_integer(original_value)).body[0])
         return n
-    # if const_type == str:
-    #     n.body.append(ast.parse(
-    #         f"bin_str = {encrypted_value}\nbinary_str = ''.join('0' if char == 'へ' else '1' for char in bin_str)\nreturn int(binary_str, 2).to_bytes((len(binary_str) + 7) // 8, byteorder='big')").body[0:3])
-    # elif const_type == int:
-    #     n.body.append(ast.parse("return 'integer'").body[0])
-    # elif const_type == float:
-    #     n.body.append(ast.parse("return 'float'").body[0])
-    # elif const_type == bool:
-    #     n.body.append(ast.parse("return 'boolean'").body[0])
-    # else:
-    #     raise ValueError(f"Unknown type: {type(const_type)}")
-    # return n
+    else:
+        raise ValueError(f"Unknown type: {type(original_value)}")
 
 
 def convert_to_bin_name(data):
     assert (isinstance(data, int) or isinstance(data, str))
     if isinstance(data, str):
+        # return data[::-1]
         data = data.encode()
         binary = ""
         for hex in data:
@@ -233,12 +249,9 @@ def generate_code_for_string(input_str):
     program_parts = []
     for char in input_str:
         char_code = ord(char)
-        # ここで文字コードを隠蔽するための計算を行う
-        # 例: char_codeを2で割った値に2を足して再び2を掛ける（元の値に戻る）
         masked_code = f"(int({char_code} / 2 * 2))"
         program_parts.append(f"chr({masked_code})")
 
-    # 文字列を連結して完全なプログラムを作成
     program = " + ".join(program_parts)
     return "return " + program
 
@@ -249,12 +262,10 @@ def generate_code_for_integer(num):
     num2 = random.randint(100000, 999999)
     num3 = random.randint(100000, 999999)
 
-    # 複雑な計算を行う
     step1 = num ^ num1
     step2 = step1 + num2
     step3 = step2 - num3
 
-    # 元の数に戻すための計算を行うコードを生成
     program = f"(({step3} + {num3} - {num2}) ^ {num1})"
     return "return " + program
 
@@ -264,7 +275,6 @@ def generate_code_for_float(num):
     mantissa, exponent = math.frexp(num)
     exponent = exponent - 1  # 調整
 
-    # 2の累乗の数をランダムに生成
     power_of_two = 2 ** random.randint(20, 30)
 
     # 仮数部と指数部に対する計算を生成

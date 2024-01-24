@@ -1,4 +1,14 @@
+import ast
 
-print(1)
-print(True)
-print("1")
+code = """
+def hoge():
+    return "hoge"
+print(f"{hoge()}")
+"""
+
+exec(code)
+print()
+
+tree = ast.parse(code)
+print(ast.dump(tree, indent=4))
+print(ast.unparse(tree))
