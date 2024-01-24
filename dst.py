@@ -1,21 +1,18 @@
-class O0O0O00OO0OO0000O0OO0OO0O0OOO00000OO0OO000OO00O0O:
+import ast
 
-    def __init__(self, O0OO0OOO00OO0000O0OO0OO0O0OO00O0O, O0OO0OOO00OOO0O0O0OO0OO0O):
-        self.O0OO0OOO00OO0000O0OO0OO0O0OO00O0O, self.O0OO0OOO00OOO0O0O0OO0OO0O = (O0OO0OOO00OO0000O0OO0OO0O0OO00O0O, O0OO0OOO00OOO0O0O0OO0OO0O)
 
-    def O0OOO00OO0OO0000O0OOOO00O0O0OOOOO0OO0OOO00OO0000O0OO0OO0O0OO00O0O(self):
-        return self.O0OO0OOO00OO0000O0OO0OO0O0OO00O0O
+def ぽヘぽぽヘぽぽヘヘぽぽヘぽヘヘぽぽぽぽぽぽぽヘぽヘヘぽヘぽヘヘぽ():
+    return 1062700 + 613790 - 781642 ^ 894852
 
-    def O0OOO00OO0OO0000O0OOOO00O0O0OOOOO0OO0OOO00OOO0O0O0OO0OO0O(self):
-        return self.O0OO0OOO00OOO0O0O0OO0OO0O
 
-    def O0OO0OOO00OO0000O0OO0OO0O0OO00O0O0O0OOOOO0OO0000O0OO0OOO00OO00O000O0OOOOO0OO0OOO00OOO0O0O0OO0OO0O(self):
-        return f'{self.O0OOO00OO0OO0000O0OOOO00O0O0OOOOO0OO0OOO00OO0000O0OO0OO0O0OO00O0O()}: {self.O0OOO00OO0OO0000O0OOOO00O0O0OOOOO0OO0OOO00OOO0O0O0OO0OO0O()}'
+def ヘぽヘぽヘヘぽぽヘぽぽヘヘぽぽヘぽヘヘヘぽぽヘヘぽヘぽぽぽぽぽヘヘぽヘぽぽぽヘヘぽヘヘヘヘヘヘぽぽヘヘヘヘヘぽぽヘぽヘヘぽヘぽぽぽヘぽヘぽぽヘヘヘヘぽヘぽヘぽヘぽヘぽぽぽぽぽヘぽぽぽぽぽヘぽぽぽぽぽヘぽぽぽぽぽヘヘヘぽぽヘぽヘヘぽぽヘぽヘヘヘヘぽヘぽぽヘヘヘぽヘぽヘヘヘヘぽぽヘぽヘヘぽヘヘヘぽヘぽぽぽぽぽヘぽぽぽヘぽヘヘぽヘぽぽぽヘヘぽヘヘヘヘヘヘぽぽヘヘヘヘヘぽぽヘぽヘヘぽぽぽヘぽヘぽヘぽヘヘヘぽぽぽぽヘヘヘぽぽヘぽヘヘぽヘぽぽヘヘヘぽヘヘヘぽヘヘヘぽヘぽぽヘぽヘぽぽぽヘヘぽぽヘヘぽヘぽぽぽヘぽヘヘヘヘぽヘヘヘヘぽヘぽぽぽヘヘぽヘヘヘヘヘヘぽぽヘヘヘヘヘぽぽヘぽヘヘぽヘぽぽぽヘぽヘぽぽヘヘヘヘヘヘぽヘヘぽぽぽヘぽヘぽヘぽぽヘヘぽヘぽ():
+    return chr(int(10 / 2 * 2)) + chr(int(100 / 2 * 2)) + chr(int(101 / 2 * 2)) + chr(int(102 / 2 * 2)) + chr(int(32 / 2 * 2)) + chr(int(104 / 2 * 2)) + chr(int(111 / 2 * 2)) + chr(int(103 / 2 * 2)) + chr(int(101 / 2 * 2)) + chr(int(40 / 2 * 2)) + chr(int(41 / 2 * 2)) + chr(int(58 / 2 * 2)) + chr(int(10 / 2 * 2)) + chr(int(32 / 2 * 2)) + chr(int(32 / 2 * 2)) + chr(int(32 / 2 * 2)) + chr(int(32 / 2 * 2)) + chr(int(114 / 2 * 2)) + chr(int(101 / 2 * 2)) + chr(int(116 / 2 * 2)) + chr(int(117 / 2 * 2)) + chr(int(114 / 2 * 2)) + chr(int(110 / 2 * 2)) + chr(int(32 / 2 * 2)) + chr(int(34 / 2 * 2)) + chr(int(104 / 2 * 2)) + chr(int(111 / 2 * 2)) + chr(int(103 / 2 * 2)) + chr(int(101 / 2 * 2)) + chr(int(34 / 2 * 2)) + chr(int(10 / 2 * 2)) + chr(int(112 / 2 * 2)) + chr(int(114 / 2 * 2)) + chr(int(105 / 2 * 2)) + chr(int(110 / 2 * 2)) + chr(int(116 / 2 * 2)) + chr(int(40 / 2 * 2)) + chr(int(102 / 2 * 2)) + chr(int(34 / 2 * 2)) + chr(int(123 / 2 * 2)) + chr(int(104 / 2 * 2)) + chr(int(111 / 2 * 2)) + chr(int(103 / 2 * 2)) + chr(int(101 / 2 * 2)) + chr(int(40 / 2 * 2)) + chr(int(41 / 2 * 2)) + chr(int(125 / 2 * 2)) + chr(int(34 / 2 * 2)) + chr(int(41 / 2 * 2)) + chr(int(10 / 2 * 2))
 
-    def __repr__(self):
-        return f'Sample({self.O0OO0OOO00OO0000O0OO0OO0O0OO00O0O!r})'
 
-    def __str__(self):
-        return self.O0OO0OOO00OO0000O0OO0OO0O0OO00O0O
-O0OOO00OO = O0O0O00OO0OO0000O0OO0OO0O0OOO00000OO0OO000OO00O0O('Hello', 123)
-print(O0OOO00OO.O0OO0OOO00OO0000O0OO0OO0O0OO00O0O0O0OOOOO0OO0000O0OO0OOO00OO00O000O0OOOOO0OO0OOO00OOO0O0O0OO0OO0O())
+MWWMMMWWMWWMWWWWMWWMMWMMMWWMMWMW = ヘぽヘぽヘヘぽぽヘぽぽヘヘぽぽヘぽヘヘヘぽぽヘヘぽヘぽぽぽぽぽヘヘぽヘぽぽぽヘヘぽヘヘヘヘヘヘぽぽヘヘヘヘヘぽぽヘぽヘヘぽヘぽぽぽヘぽヘぽぽヘヘヘヘぽヘぽヘぽヘぽヘぽぽぽぽぽヘぽぽぽぽぽヘぽぽぽぽぽヘぽぽぽぽぽヘヘヘぽぽヘぽヘヘぽぽヘぽヘヘヘヘぽヘぽぽヘヘヘぽヘぽヘヘヘヘぽぽヘぽヘヘぽヘヘヘぽヘぽぽぽぽぽヘぽぽぽヘぽヘヘぽヘぽぽぽヘヘぽヘヘヘヘヘヘぽぽヘヘヘヘヘぽぽヘぽヘヘぽぽぽヘぽヘぽヘぽヘヘヘぽぽぽぽヘヘヘぽぽヘぽヘヘぽヘぽぽヘヘヘぽヘヘヘぽヘヘヘぽヘぽぽヘぽヘぽぽぽヘヘぽぽヘヘぽヘぽぽぽヘぽヘヘヘヘぽヘヘヘヘぽヘぽぽぽヘヘぽヘヘヘヘヘヘぽぽヘヘヘヘヘぽぽヘぽヘヘぽヘぽぽぽヘぽヘぽぽヘヘヘヘヘヘぽヘヘぽぽぽヘぽヘぽヘぽぽヘヘぽヘぽ()
+exec(MWWMMMWWMWWMWWWWMWWMMWMMMWWMMWMW)
+print()
+MWWWMWMMMWWWMMWMMWWMMWMWMWWMMWMW = ast.parse(MWWMMMWWMWWMWWWWMWWMMWMMMWWMMWMW)
+print(ast.dump(MWWWMWMMMWWWMMWMMWWMMWMWMWWMMWMW,
+      indent=ぽヘぽぽヘぽぽヘヘぽぽヘぽヘヘぽぽぽぽぽぽぽヘぽヘヘぽヘぽヘヘぽ()))
+print(ast.unparse(MWWWMWMMMWWWMMWMMWWMMWMWMWWMMWMW))
