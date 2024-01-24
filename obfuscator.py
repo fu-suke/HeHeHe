@@ -1,4 +1,4 @@
-from _ast import Constant, ExceptHandler, Module, alias, arg
+from _ast import AsyncFunctionDef, ExceptHandler, Module, alias, arg
 import ast
 from typing import Any
 import random
@@ -30,9 +30,17 @@ class Obfuscator(ast.NodeTransformer):
         print("=====================================")
 
     def obfuscate(self):
+        # 関数定義を漁る
+        self.search_FunctionDef(self.tree)
         new_tree = self.visit(self.tree)
         # print(ast.dump(self.tree, indent=4))
         return ast.unparse(new_tree)
+
+    def search_FunctionDef(self, node):
+        if isinstance(node, ast.FunctionDef):
+            self.defined_functions.append(node.name)
+        for child in ast.iter_child_nodes(node):
+            self.search_FunctionDef(child)
 
     def visit_Module(self, node: Module) -> Any:
         super().generic_visit(node)
@@ -79,6 +87,11 @@ class Obfuscator(ast.NodeTransformer):
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:
         self.defined_functions.append(node.name)
+        # 戻り値の型アノテーションを消す
+        if node.returns:
+            node.returns = None
+        # 関数名はNameノードではなく文字列型なので、直接ここで変更する
+        node.name = self.encrypt_strings(node.name)
         # デコレータを退避する
         tmp = []
         if node.decorator_list:
@@ -89,6 +102,9 @@ class Obfuscator(ast.NodeTransformer):
         if tmp:
             node.decorator_list = tmp
         return node
+
+    def visit_AsyncFunctionDef(self, node: AsyncFunctionDef) -> Any:
+        return self.visit_FunctionDef(node)
 
     def visit_Import(self, node: ast.Import) -> Any:
         for alias in node.names:
@@ -109,9 +125,11 @@ class Obfuscator(ast.NodeTransformer):
         if node.asname:
             node.asname = self.encrypt_strings(node.asname)
         return node
-    
+
     def visit_arg(self, node: arg) -> Any:
         node.arg = self.encrypt_strings(node.arg)
+        if node.annotation:
+            node.annotation = None
         return node
 
     def visit_ExceptHandler(self, node: ExceptHandler) -> Any:
@@ -140,6 +158,10 @@ class Obfuscator(ast.NodeTransformer):
         # print("visit_Constant: ", node.value, type(node.value))
         if not self.encrypt_consts:
             return node
+        if node.value is None:
+            return node
+        if node.value == "":
+            return node
         encrypted_constant = self.encrypt_const(node.value)
         node = ast.Call(func=ast.Name(id=encrypted_constant, ctx=ast.Load()),
                         args=[], keywords=[])
@@ -155,6 +177,18 @@ class Obfuscator(ast.NodeTransformer):
                     value=child, conversion=-1)
         return node
 
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
+        # 型アノテーションのみの場合（実際の値がない場合）、ノードを削除する
+        if node.value is None:
+            return None
+        self.generic_visit(node)
+        new_node = ast.Assign(targets=[node.target], value=node.value)
+        if hasattr(node, 'lineno'):
+            new_node.lineno = node.lineno
+        if hasattr(node, 'col_offset'):
+            new_node.col_offset = node.col_offset
+        return new_node
+
     def encrypt_strings(self, name: str) -> str:
         assert isinstance(name, str)
         if not self.encrypt_variables:
@@ -166,7 +200,7 @@ class Obfuscator(ast.NodeTransformer):
         if name.startswith("__"):
             return name
 
-        # return name[::-1]
+        return name[::-1]
         name = name.encode()
         new_name = ""
         for hex in name:
@@ -231,7 +265,7 @@ def create_decrypt_function(encrypted_value, original_value, const_type):
 def convert_to_bin_name(data):
     assert (isinstance(data, int) or isinstance(data, str))
     if isinstance(data, str):
-        # return data[::-1]
+        return data[::-1]
         data = data.encode()
         binary = ""
         for hex in data:

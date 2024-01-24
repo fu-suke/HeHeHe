@@ -1,14 +1,11 @@
-import ast
+# g = {}
+# l = {}
+# exec("", g, l)
+# g["__builtins__"].update({"myprint": g["__builtins__"]["print"]})
+# g["__builtins__"].update({"print": lambda *args, **kwargs: None})
+# myprint("hoge")
 
-code = """
-def hoge():
-    return "hoge"
-print(f"{hoge()}")
-"""
+A:int
 
-exec(code)
-print()
 
-tree = ast.parse(code)
-print(ast.dump(tree, indent=4))
-print(ast.unparse(tree))
+print(A)
