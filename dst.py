@@ -1,18 +1,7 @@
-import ast
+def OO00O000OO00O0OOO0OO00OO0OO00OO0OOOOO0OO00O00000O0O0OOOOO0OOOOOOO00O0OO0OO00OO00O00O0000O():
+    return chr(int(72 / 2 * 2)) + chr(int(101 / 2 * 2)) + chr(int(108 / 2 * 2)) + chr(int(108 / 2 * 2)) + chr(int(111 / 2 * 2)) + chr(int(44 / 2 * 2)) + chr(int(32 / 2 * 2)) + chr(int(87 / 2 * 2)) + chr(int(111 / 2 * 2)) + chr(int(114 / 2 * 2)) + chr(int(108 / 2 * 2)) + chr(int(100 / 2 * 2)) + chr(int(33 / 2 * 2))
 
-
-def ぽヘぽぽヘぽぽヘヘぽぽヘぽヘヘぽぽぽぽぽぽぽヘぽヘヘぽヘぽヘヘぽ():
-    return 1062700 + 613790 - 781642 ^ 894852
-
-
-def ヘぽヘぽヘヘぽぽヘぽぽヘヘぽぽヘぽヘヘヘぽぽヘヘぽヘぽぽぽぽぽヘヘぽヘぽぽぽヘヘぽヘヘヘヘヘヘぽぽヘヘヘヘヘぽぽヘぽヘヘぽヘぽぽぽヘぽヘぽぽヘヘヘヘぽヘぽヘぽヘぽヘぽぽぽぽぽヘぽぽぽぽぽヘぽぽぽぽぽヘぽぽぽぽぽヘヘヘぽぽヘぽヘヘぽぽヘぽヘヘヘヘぽヘぽぽヘヘヘぽヘぽヘヘヘヘぽぽヘぽヘヘぽヘヘヘぽヘぽぽぽぽぽヘぽぽぽヘぽヘヘぽヘぽぽぽヘヘぽヘヘヘヘヘヘぽぽヘヘヘヘヘぽぽヘぽヘヘぽぽぽヘぽヘぽヘぽヘヘヘぽぽぽぽヘヘヘぽぽヘぽヘヘぽヘぽぽヘヘヘぽヘヘヘぽヘヘヘぽヘぽぽヘぽヘぽぽぽヘヘぽぽヘヘぽヘぽぽぽヘぽヘヘヘヘぽヘヘヘヘぽヘぽぽぽヘヘぽヘヘヘヘヘヘぽぽヘヘヘヘヘぽぽヘぽヘヘぽヘぽぽぽヘぽヘぽぽヘヘヘヘヘヘぽヘヘぽぽぽヘぽヘぽヘぽぽヘヘぽヘぽ():
-    return chr(int(10 / 2 * 2)) + chr(int(100 / 2 * 2)) + chr(int(101 / 2 * 2)) + chr(int(102 / 2 * 2)) + chr(int(32 / 2 * 2)) + chr(int(104 / 2 * 2)) + chr(int(111 / 2 * 2)) + chr(int(103 / 2 * 2)) + chr(int(101 / 2 * 2)) + chr(int(40 / 2 * 2)) + chr(int(41 / 2 * 2)) + chr(int(58 / 2 * 2)) + chr(int(10 / 2 * 2)) + chr(int(32 / 2 * 2)) + chr(int(32 / 2 * 2)) + chr(int(32 / 2 * 2)) + chr(int(32 / 2 * 2)) + chr(int(114 / 2 * 2)) + chr(int(101 / 2 * 2)) + chr(int(116 / 2 * 2)) + chr(int(117 / 2 * 2)) + chr(int(114 / 2 * 2)) + chr(int(110 / 2 * 2)) + chr(int(32 / 2 * 2)) + chr(int(34 / 2 * 2)) + chr(int(104 / 2 * 2)) + chr(int(111 / 2 * 2)) + chr(int(103 / 2 * 2)) + chr(int(101 / 2 * 2)) + chr(int(34 / 2 * 2)) + chr(int(10 / 2 * 2)) + chr(int(112 / 2 * 2)) + chr(int(114 / 2 * 2)) + chr(int(105 / 2 * 2)) + chr(int(110 / 2 * 2)) + chr(int(116 / 2 * 2)) + chr(int(40 / 2 * 2)) + chr(int(102 / 2 * 2)) + chr(int(34 / 2 * 2)) + chr(int(123 / 2 * 2)) + chr(int(104 / 2 * 2)) + chr(int(111 / 2 * 2)) + chr(int(103 / 2 * 2)) + chr(int(101 / 2 * 2)) + chr(int(40 / 2 * 2)) + chr(int(41 / 2 * 2)) + chr(int(125 / 2 * 2)) + chr(int(34 / 2 * 2)) + chr(int(41 / 2 * 2)) + chr(int(10 / 2 * 2))
-
-
-MWWMMMWWMWWMWWWWMWWMMWMMMWWMMWMW = ヘぽヘぽヘヘぽぽヘぽぽヘヘぽぽヘぽヘヘヘぽぽヘヘぽヘぽぽぽぽぽヘヘぽヘぽぽぽヘヘぽヘヘヘヘヘヘぽぽヘヘヘヘヘぽぽヘぽヘヘぽヘぽぽぽヘぽヘぽぽヘヘヘヘぽヘぽヘぽヘぽヘぽぽぽぽぽヘぽぽぽぽぽヘぽぽぽぽぽヘぽぽぽぽぽヘヘヘぽぽヘぽヘヘぽぽヘぽヘヘヘヘぽヘぽぽヘヘヘぽヘぽヘヘヘヘぽぽヘぽヘヘぽヘヘヘぽヘぽぽぽぽぽヘぽぽぽヘぽヘヘぽヘぽぽぽヘヘぽヘヘヘヘヘヘぽぽヘヘヘヘヘぽぽヘぽヘヘぽぽぽヘぽヘぽヘぽヘヘヘぽぽぽぽヘヘヘぽぽヘぽヘヘぽヘぽぽヘヘヘぽヘヘヘぽヘヘヘぽヘぽぽヘぽヘぽぽぽヘヘぽぽヘヘぽヘぽぽぽヘぽヘヘヘヘぽヘヘヘヘぽヘぽぽぽヘヘぽヘヘヘヘヘヘぽぽヘヘヘヘヘぽぽヘぽヘヘぽヘぽぽぽヘぽヘぽぽヘヘヘヘヘヘぽヘヘぽぽぽヘぽヘぽヘぽぽヘヘぽヘぽ()
-exec(MWWMMMWWMWWMWWWWMWWMMWMMMWWMMWMW)
-print()
-MWWWMWMMMWWWMMWMMWWMMWMWMWWMMWMW = ast.parse(MWWMMMWWMWWMWWWWMWWMMWMMMWWMMWMW)
-print(ast.dump(MWWWMWMMMWWWMMWMMWWMMWMWMWWMMWMW,
-      indent=ぽヘぽぽヘぽぽヘヘぽぽヘぽヘヘぽぽぽぽぽぽぽヘぽヘヘぽヘぽヘヘぽ()))
-print(ast.unparse(MWWWMWMMMWWWMMWMMWWMMWMWMWWMMWMW))
+def OO00O0OOOO00OO0O0O00O00OOO00O00OOO00O0000():
+    return OO00O000OO00O0OOO0OO00OO0OO00OO0OOOOO0OO00O00000O0O0OOOOO0OOOOOOO00O0OO0OO00OO00O00O0000O()
+print(OO00O0OOOO00OO0O0O00O00OOO00O00OOO00O0000.__name__)
+print(OO00O0OOOO00OO0O0O00O00OOO00O00OOO00O0000())

@@ -174,8 +174,8 @@ class Obfuscator(ast.NodeTransformer):
             for b in binary:
                 if b == "b":
                     continue
-                new_name += ("M" if b == "0" else "W")
-        return "" + new_name
+                new_name += ("O" if b == "0" else "0")
+        return "O" + new_name
 
     def encrypt_const(self, value) -> Any:
         import struct
@@ -241,8 +241,8 @@ def convert_to_bin_name(data):
     for b in binary:
         if b == "b":
             continue
-        new_name += ("ぽ" if b == "0" else "ヘ")
-    return new_name
+        new_name += ("0" if b == "0" else "O")
+    return "O" + new_name
 
 
 def generate_code_for_string(input_str):
