@@ -9,7 +9,8 @@ def main():
     o = Obfuscator(
         code,
         encrypt_variables=True,
-        encrypt_consts=True
+        encrypt_consts=True,
+        encrypt_builtins=True,
     )
     with open("dst.py", "w", encoding="utf-8") as f:
         f.write(o.obfuscate())

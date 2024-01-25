@@ -1,8 +1,11 @@
-if (a := 3) == 3:
-    print(a)
+# try:
+#     print(1/0)
+# except ZeroDivisionError:
+#     print("ZeroDivisionError")
+# except Exception:
+#     print("Exception")
 
-a += 1
-print(a)
+def func(a=3):
+    return a
 
-a = 1.1
-print(a)
+print(func())

@@ -1,3 +1,4 @@
+from builtin_encode import builtin_encode
 
 
 class Encoder():
@@ -79,7 +80,7 @@ class Encoder():
         for char in input_str:
             char_code = ord(char)
             # ToDo: chr の変更
-            program_parts.append(f"chr({char_code})")
+            program_parts.append(f"{builtin_encode('chr')}({char_code})")
 
         program = " + ".join(program_parts)
         return "return " + program
