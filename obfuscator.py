@@ -1,20 +1,12 @@
 from _ast import AsyncFunctionDef, ExceptHandler, Module, alias, arg
 import ast
 from typing import Any
-import random
-import math
-
-INTEGER_MASK = 1234567890
-FLOAT_MASK = 5432160987
-STRING_MASK = 9523045671
-BOOLEAN_MASK = 2058934567
-
-PREFIX = ""
-ZERO = "ほ"
-ONE = "げ"
+from encoder import Encoder
 
 
 class Obfuscator(ast.NodeTransformer):
+    encoder = Encoder()
+
     def __init__(self, code, encrypt_variables=True, encrypt_consts=True):
         self.code = code
         self.tree = ast.parse(code)
@@ -24,17 +16,30 @@ class Obfuscator(ast.NodeTransformer):
         self.defined_attributes = []
         self.exceptions = ["self"]  # 例外として変数名を変更しないもの
         self.encrypted_constants = set()  # 暗号化された定数たち
-        self.encrypt_dict = {}
+        self.encrypt_dict = {}  # 暗号化された値：[元の値, 型]
+        self.builtin_dict = {}  # 元の組み込み関数名: 暗号化後の組み込み関数名
         self.encrypt_variables = encrypt_variables
         self.encrypt_consts = encrypt_consts
-        print(ast.dump(self.tree, indent=4))
-        print("=====================================")
+        # print(ast.dump(self.tree, indent=4))
+        # print("=====================================")
 
     def obfuscate(self):
+        self.encrypt_builtins()
+        #         code = """
+        # g = {}
+        # l = {}
+        # exec("", g, l)
+        # g["__builtins__"].update({"myprint": g["__builtins__"]["print"]})
+        # g["__builtins__"].update({"print": lambda *args, **kwargs: None})
+        # """
+        # t = ast.parse(code)
         # 関数定義を漁る
         self.search_FunctionDef(self.tree)
         new_tree = self.visit(self.tree)
         # print(ast.dump(self.tree, indent=4))
+        # t.body.reverse()
+        # for child in t.body:
+        #     new_tree.body.insert(0, child)
         return ast.unparse(new_tree)
 
     def search_FunctionDef(self, node):
@@ -47,10 +52,10 @@ class Obfuscator(ast.NodeTransformer):
         super().generic_visit(node)
         # 定数を復号する処理を追加
         for k, v in self.encrypt_dict.items():
-            n = create_decrypt_function(k, v[0], v[1])
+            n = self.encoder.create_decrypt_function(k, v[0], v[1])
             if not n:
                 continue
-            node.body.insert(0, n)  # これが失敗する模様
+            node.body.insert(0, n)
         return node
 
     def visit_Call(self, node: ast.Call) -> Any:
@@ -207,122 +212,21 @@ class Obfuscator(ast.NodeTransformer):
         if name.startswith("__"):
             return name
 
-        # return name[::-1]
-        name = name.encode()
-        new_name = ""
-        for hex in name:
-            # 2進数に変換
-            binary = bin(hex)
-            for b in binary:
-                if b == "b":
-                    continue
-                new_name += (ZERO if b == "0" else ONE)
-        return PREFIX + new_name
+        return self.encoder.encode(name)
 
-    def encrypt_const(self, value) -> Any:
-        import struct
-        original_value = value
-        self.encrypted_constants.add(value)
-        const_type = type(value)
-        if const_type == str:
-            pass
-        elif const_type == int:
-            value = value ^ INTEGER_MASK
-        elif const_type == float:
-            # 浮動小数点数をビット表現に変換し、整数として解釈
-            value = struct.unpack('!I', struct.pack('!f', value))[
-                0] ^ FLOAT_MASK
-        elif const_type == bool:
-            value = value ^ BOOLEAN_MASK
-        else:
-            raise ValueError(f"Unknown type: {type(value)}")
+    def encrypt_const(self, const) -> Any:
+        original_value = const
+        const_type = type(const)
 
-        new_name = convert_to_bin_name(value)
-        if value not in self.encrypt_dict:
+        new_name = self.encoder.encode_const(const)
+        if const not in self.encrypt_dict:
             self.encrypt_dict[new_name] = [original_value, const_type]
         return new_name
 
-
-def create_decrypt_function(encrypted_value, original_value, const_type):
-    n = ast.FunctionDef(name=encrypted_value, args=ast.arguments(
-        posonlyargs=[], args=[], kwonlyargs=[], kw_defaults=[], defaults=[]), body=[], decorator_list=[])
-    n.lineno = 3
-    n.col_offset = 0
-
-    if const_type == str:
-        n.body.append(
-            ast.parse(generate_code_for_string(original_value)).body[0])
-        return n
-    elif const_type == int:
-        n.body.append(
-            ast.parse(generate_code_for_integer(original_value)).body[0])
-        return n
-    elif const_type == float:
-        n.body.append(
-            ast.parse(generate_code_for_float(original_value)).body[:2])
-        return n
-    elif const_type == bool:
-        n.body.append(
-            ast.parse(generate_code_for_integer(original_value)).body[0])
-        return n
-    else:
-        raise ValueError(f"Unknown type: {type(original_value)}")
-
-
-def convert_to_bin_name(data):
-    assert (isinstance(data, int) or isinstance(data, str))
-    if isinstance(data, str):
-        # return data[::-1]
-        data = data.encode()
-        binary = ""
-        for hex in data:
-            binary += bin(hex)[2:]
-    else:
-        binary = bin(data)
-    new_name = ""
-    for b in binary:
-        if b == "b":
-            continue
-        new_name += (ZERO if b == "0" else ONE)
-    return PREFIX + new_name
-
-
-def generate_code_for_string(input_str):
-    program_parts = []
-    for char in input_str:
-        char_code = ord(char)
-        masked_code = f"(int({char_code} / 2 * 2))"
-        program_parts.append(f"chr({masked_code})")
-
-    program = " + ".join(program_parts)
-    return "return " + program
-
-
-def generate_code_for_integer(num):
-    # 複数のランダムな大きな数を生成
-    num1 = random.randint(100000, 999999)
-    num2 = random.randint(100000, 999999)
-    num3 = random.randint(100000, 999999)
-
-    step1 = num ^ num1
-    step2 = step1 + num2
-    step3 = step2 - num3
-
-    program = f"(({step3} + {num3} - {num2}) ^ {num1})"
-    return "return " + program
-
-
-def generate_code_for_float(num):
-    # 浮動小数点数の仮数部と指数部を取得
-    mantissa, exponent = math.frexp(num)
-    exponent = exponent - 1  # 調整
-
-    power_of_two = 2 ** random.randint(20, 30)
-
-    # 仮数部と指数部に対する計算を生成
-    mantissa_calc = f"({mantissa} * {power_of_two}) / {power_of_two}"
-    exponent_calc = f"({exponent} + 1)"
-
-    # 元の浮動小数点数を再構築するコードを生成
-    program = f"import math\nreturn math.ldexp({mantissa_calc}, {exponent_calc})"
-    return program
+    def encrypt_builtins(self):
+        globals_ = {}
+        locals_ = {}
+        exec("", globals_, locals_)
+        # 組み込み名：暗号化後の組み込み名の辞書を作成
+        for k in globals_["__builtins__"].keys():
+            self.builtin_dict[k] = self.encrypt_strings(k)

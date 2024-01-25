@@ -1,20 +1,8 @@
-class Sample:
-    def __init__(self) -> None:
-        self.name, self.id = "honi", 1
+if (a := 3) == 3:
+    print(a)
 
-    def get_name(self):
-        return self.name
+a += 1
+print(a)
 
-
-class SampleEX:
-    def __init__(self) -> None:
-        s = Sample()
-        self.abc = s.get_name()
-        self.d = s.id
-
-
-s = SampleEX()
-print(s.abc, s.d)
-
-s.xyz = 123
-print(s.xyz)
+a = 1.1
+print(a)

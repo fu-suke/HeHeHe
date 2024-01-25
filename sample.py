@@ -1,11 +1,20 @@
-# g = {}
-# l = {}
-# exec("", g, l)
-# g["__builtins__"].update({"myprint": g["__builtins__"]["print"]})
-# g["__builtins__"].update({"print": lambda *args, **kwargs: None})
-# myprint("hoge")
+# from pprint import pprint
 
-A:int
+# globals_ = {}
+# locals_ = {}
+# exec("", globals_, locals_)
+# temp_dict = {}
+# for k, v in globals_["__builtins__"].items():
+#     temp_dict[f"my{k}"] = v
+#     temp_dict[k] = None
+# globals_["__builtins__"].update(temp_dict)
 
 
-print(A)
+# # pprint(g["__builtins__"])
+
+# try:
+#     print("abc")
+# except myZeroDivisionError:
+#     myprint("ZeroDivisionError")
+# except myTypeError:
+#     myprint("TypeError")
