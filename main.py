@@ -8,12 +8,14 @@ def main():
 
     o = Obfuscator(
         code,
-        encrypt_variables=True,
+        encrypt_idents=True,
         encrypt_consts=True,
         encrypt_builtins=True,
     )
     with open("dst.py", "w", encoding="utf-8") as f:
         f.write(o.obfuscate())
+
+    # print(o.encrypted_idents["func"])
 
 
 if __name__ == "__main__":
