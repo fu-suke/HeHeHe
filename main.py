@@ -10,16 +10,10 @@ def main():
         code,
         encrypt_variables=True,
         encrypt_consts=True,
-        encrypt_builtins=False,
+        encrypt_builtins=True,
     )
     with open("dst.py", "w", encoding="utf-8") as f:
         f.write(o.obfuscate())
-    # print(o.defined_functions)
-    # print(o.defined_attributes)
-    # print(o.builtin_dict)
-    # print(o.encrypted_constants)
-    # print(o.encrypt_dict)
-    # print(o.convert_to_bin_name("abc"))
 
 
 if __name__ == "__main__":

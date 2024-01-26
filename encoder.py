@@ -11,6 +11,7 @@ class Encoder():
     FLOAT_MASK = 5432160987
     STRING_MASK = 9523045671
     BOOLEAN_MASK = 2058934567
+    NONE_MASK = 6508934127
 
     def __init__(self, prefix="O", zero="0", one="O", encrypt_builtins=False):
         self.PREFIX = prefix
@@ -20,7 +21,9 @@ class Encoder():
 
     def encode_const(self, const):
         const_type = type(const)
-        if const_type == str:
+        if const is None:
+            const = self.NONE_MASK
+        elif const_type == str:
             pass
         elif const_type == int:
             const = const ^ self.INTEGER_MASK
@@ -57,7 +60,11 @@ class Encoder():
         n.lineno = 3
         n.col_offset = 0
 
-        if const_type == str:
+        if original_value is None:
+            n.body.append(
+                self.ast.parse(self.generate_code_for_None()).body[0])
+            return n
+        elif const_type == str:
             n.body.append(
                 self.ast.parse(self.generate_code_for_string(original_value)).body[0])
             return n
@@ -115,4 +122,13 @@ class Encoder():
 
         # 元の浮動小数点数を再構築するコードを生成
         program = f"import math\nreturn math.ldexp({mantissa_calc}, {exponent_calc})"
+        return program
+
+    def generate_code_for_None(self):
+        # Noneを返す、やや複雑なコードを生成
+        string_None = self.encode_const(None)
+        if self.encrypt_builtins:
+            program = f"\nreturn {builtin_encode('exec')}('')"
+        else:
+            program = f"\nreturn exec('')"
         return program
