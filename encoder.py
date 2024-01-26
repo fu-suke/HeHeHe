@@ -12,10 +12,11 @@ class Encoder():
     STRING_MASK = 9523045671
     BOOLEAN_MASK = 2058934567
 
-    def __init__(self, prefix="O", zero="0", one="O"):
+    def __init__(self, prefix="O", zero="0", one="O", encrypt_builtins=False):
         self.PREFIX = prefix
         self.ZERO = zero
         self.ONE = one
+        self.encrypt_builtins = encrypt_builtins
 
     def encode_const(self, const):
         const_type = type(const)
@@ -79,8 +80,10 @@ class Encoder():
         program_parts = []
         for char in input_str:
             char_code = ord(char)
-            # ToDo: chr の変更
-            program_parts.append(f"{builtin_encode('chr')}({char_code})")
+            if self.encrypt_builtins:
+                program_parts.append(f"{builtin_encode('chr')}({char_code})")
+            else:
+                program_parts.append(f"chr({char_code})")
 
         program = " + ".join(program_parts)
         return "return " + program

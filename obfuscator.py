@@ -6,12 +6,11 @@ from builtin_encode import builtin_encode
 
 
 class Obfuscator(ast.NodeTransformer):
-    encoder = Encoder()
 
     def __init__(self, code,
                  encrypt_variables=True,
                  encrypt_consts=True,
-                 encrypt_builtins=True):
+                 encrypt_builtins=False):
         self.code = code
         self.tree = ast.parse(code)
         self.modules = []
@@ -21,26 +20,26 @@ class Obfuscator(ast.NodeTransformer):
         self.exceptions = ["self"]  # 例外として変数名を変更しないもの
         self.encrypted_constants = set()  # 暗号化された定数たち
         self.encrypt_dict = {}  # 暗号化された値：[元の値, 型]
-        self.init_exec = False
+        # 最初の1回のみexec関数およびlist関数を暗号化しない
+        self.init_exec, self.init_list = False, False
         self.builtin_dict = {}  # 元の組み込み関数名: 暗号化後の組み込み関数名
         self.encrypt_variables = encrypt_variables
         self.encrypt_consts = encrypt_consts
         self.encrypt_builtins = encrypt_builtins
+        self.encoder = Encoder(encrypt_builtins=encrypt_builtins)
         # print(ast.dump(self.tree, indent=4))
         # print("=====================================")
 
     def obfuscate(self):
         # 関数定義を漁る
         self.insert_FunctionDef(self.tree)
+        # 組み込み関数名を判別するための辞書を作成
+        self.create_builtin_dict()
         if self.encrypt_builtins:
             self.insert_encrypt_builtins()
 
         print(ast.dump(self.tree, indent=4))
         new_tree = self.visit(self.tree)
-        # print(ast.dump(self.tree, indent=4))
-        # t.body.reverse()
-        # for child in t.body:
-        #     new_tree.body.insert(0, child)
         return ast.unparse(new_tree)
 
     def insert_FunctionDef(self, node):
@@ -78,8 +77,11 @@ class Obfuscator(ast.NodeTransformer):
             # else:
             #     # 元の関数名を保持したノードを作成する
             #     tmp = ast.Name(id=node.func.id, ctx=ast.Load())
-            n = self.visit(node.func)
-            tmp = ast.Name(id=n.id, ctx=ast.Load())
+            if node.func.id in self.builtin_dict and not self.encrypt_builtins:
+                tmp = ast.Name(id=node.func.id, ctx=ast.Load())
+            else:
+                n = self.visit(node.func)
+                tmp = ast.Name(id=n.id, ctx=ast.Load())
             # 引数などのノードを変更する
             self.generic_visit(node)
             # 関数名の復元
@@ -147,10 +149,15 @@ class Obfuscator(ast.NodeTransformer):
             node.annotation = None
         return node
 
-    # def visit_ExceptHandler(self, node: ExceptHandler) -> Any:
-    #     for b in node.body:
-    #         self.generic_visit(b)
-    #     return node
+    def visit_ExceptHandler(self, node: ExceptHandler) -> Any:
+        # 組み込み関数を暗号化する場合、ExceptHandlerの名前も暗号化する
+        if self.encrypt_builtins:
+            self.generic_visit(node)
+        # そうでないなら、ExceptHandlerの名前は暗号化せずbodyだけを暗号化する
+        else:
+            for b in node.body:
+                self.visit(b)
+        return node
 
     def visit_Attribute(self, node: ast.Attribute) -> Any:
         if isinstance(node.value, ast.Name):
@@ -216,12 +223,14 @@ class Obfuscator(ast.NodeTransformer):
         assert isinstance(name, str)
         if name in self.builtin_dict:
             # 最初のexec関数だけは暗号化しない
-            # if name == "exec":
-            #     if not self.init_exec:
-            #         self.init_exec = True
-            #         return name
-            print("name: ", name)
-            return name
+            if name == "exec" and (not self.init_exec):
+                self.init_exec = True
+                return name
+            if name == "list" and (not self.init_list):
+                self.init_list = True
+                return name
+            # print("name: ", name)
+            # return name
             return self.builtin_dict[name]
         if not self.encrypt_variables:
             return name
@@ -243,7 +252,7 @@ class Obfuscator(ast.NodeTransformer):
             self.encrypt_dict[new_name] = [original_value, const_type]
         return new_name
 
-    def insert_encrypt_builtins(self):
+    def create_builtin_dict(self):
         globals_ = {}
         locals_ = {}
         exec("", globals_, locals_)
@@ -253,23 +262,33 @@ class Obfuscator(ast.NodeTransformer):
             new_name = builtin_encode(k)
             self.builtin_dict[k] = new_name
 
-        # print("builtin_dict: ", self.builtin_dict)
-
-        # ToDo:builtin_encode.pyを複雑にする
-        with open("builtin_encode.py", "r", encoding="utf-8") as f:
-            encode_func_code = f.read()
+    def insert_encrypt_builtins(self):
 
         # ToDo:builtin_dictの中身をシャッフル
-        code = encode_func_code + """
+        code = """
 globals_, locals_ = {}, {}
 exec("", globals_, locals_)
 temp_dict = {}
-chars = ['_', '_', 'b', 'u', 'i', 'l', 't', 'i', 'n', 's', '_', '_']
-builtins_str = ''.join(chars)
-for k, v in globals_[builtins_str].items():
+
+for k, v in globals_.items():
+    builtin_str = k
+builtins_ = list(globals_[builtin_str].items())
+builtin_chr = builtins_[14][1]
+builtin_enumerate = builtins_[61][1]
+builtin_list = builtins_[67][1]
+builtin_range = builtins_[70][1]
+
+
+def builtin_encode(builtin_funcName):
+    binary = "".join(["".join([builtin_chr(48) if (byte >> i) & 1 == 0 else builtin_chr(49) for i in builtin_range(
+        7, -1, -1)]) for byte in builtin_funcName.encode()])
+    return "".join([builtin_chr(12411) if b == builtin_chr(48) else builtin_chr(12370) for b in binary])
+
+
+for k, v in globals_[builtin_str].items():
     temp_dict[builtin_encode(k)] = v
     temp_dict[k] = None
-globals_["__builtins__"].update(temp_dict)
+globals_[builtin_str].update(temp_dict)
 """
         tmp_tree = ast.parse(code)
 
@@ -280,4 +299,4 @@ globals_["__builtins__"].update(temp_dict)
         with open("a.py", "w", encoding="utf-8") as f:
             f.write(ast.unparse(self.tree))
 
-        print(code)
+        # print(code)
