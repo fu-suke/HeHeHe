@@ -30,7 +30,7 @@ class Obfuscator(ast.NodeTransformer):
         self.encrypt_consts = encrypt_consts
         self.encrypt_builtins = encrypt_builtins
         self.encoder = Encoder(encrypt_builtins=encrypt_builtins)
-        print(ast.dump(self.tree, indent=4))
+        # print(ast.dump(self.tree, indent=4))
         # print("=====================================")
 
     def obfuscate(self):
@@ -65,9 +65,9 @@ class Obfuscator(ast.NodeTransformer):
         # 通常の関数呼び出し（Atrribute呼び出しは除く）
         if isinstance(node.func, ast.Name):
             # 組み込み関数の場合
-            print("node.func.id: ", node.func.id)
+            # print("node.func.id: ", node.func.id)
             if node.func.id in self.builtin_dict:
-                print("node.func.id in self.builtin_dict: ", node.func.id)
+                # print("node.func.id in self.builtin_dict: ", node.func.id)
                 if not self.encrypt_builtins:
                     tmp = ast.Name(id=node.func.id, ctx=ast.Load())
                 else:
@@ -75,16 +75,16 @@ class Obfuscator(ast.NodeTransformer):
                     tmp = ast.Name(id=n.id, ctx=ast.Load())
             # 自分で定義した関数の場合
             elif node.func.id in self.defined_functions:
-                print("node.func.id in self.defined_functions: ", node.func.id)
+                # print("node.func.id in self.defined_functions: ", node.func.id)
                 n = self.visit(node.func)
                 tmp = ast.Name(id=n.id, ctx=ast.Load())
             # モジュールからインポートされた関数の場合は名前を変更しない
             elif node.func.id in self.imported_functions:
-                print("node.func.id in self.imported_functions: ", node.func.id)
+                # print("node.func.id in self.imported_functions: ", node.func.id)
                 tmp = ast.Name(id=node.func.id, ctx=ast.Load())
             # それ以外の関数の場合（例えば、変数に代入された関数やエイリアス
             else:
-                print("node.func.id else: ", node.func.id)
+                # print("node.func.id else: ", node.func.id)
                 tmp = ast.Name(id=self.encrypt_ident(node.func.id),
                                ctx=ast.Load())
             # 引数などのノードを変更する

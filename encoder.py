@@ -125,8 +125,6 @@ class Encoder():
         return program
 
     def generate_code_for_None(self):
-        # Noneを返す、やや複雑なコードを生成
-        string_None = self.encode_const(None)
         if self.encrypt_builtins:
             program = f"\nreturn {builtin_encode('exec')}('')"
         else:
