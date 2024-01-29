@@ -6,53 +6,59 @@ class Encoder():
     import random
     import ast
     import struct
+    from hashlib import sha256
 
-    INTEGER_MASK = 1234567890
-    FLOAT_MASK = 5432160987
-    STRING_MASK = 9523045671
-    BOOLEAN_MASK = 2058934567
-    NONE_MASK = 6508934127
+    IDENT_MASK = 12345
+# ToDo: 文字列を小さくする
 
-    def __init__(self, prefix="O", zero="0", one="O", encrypt_builtins=False):
-        self.PREFIX = prefix
+    def __init__(self, zero, one, prefix, encrypt_builtins=False):
         self.ZERO = zero
         self.ONE = one
+        self.PREFIX = prefix
         self.encrypt_builtins = encrypt_builtins
 
     def encode_const(self, const):
-        const_type = type(const)
-        if const is None:
-            const = self.NONE_MASK
-        elif const_type == str:
-            pass
-        elif const_type == int:
-            const = const ^ self.INTEGER_MASK
-        elif const_type == float:
-            # 浮動小数点数をビット表現に変換し、整数として解釈
-            const = self.struct.unpack('!I',
-                                       self.struct.pack('!f', const))[0] ^ self.FLOAT_MASK
-        elif const_type == bool:
-            const = const ^ self.BOOLEAN_MASK
-        else:
-            raise ValueError(f"Unknown type: {type(const)}")
-        return self.encode(const)
+        hash_integer = self.calculate_hash_and_extract_with_type(const)
+        return self.to_bin_string(hash_integer)
 
-    def encode(self, data):
-        assert (isinstance(data, int) or isinstance(data, str))
-        if isinstance(data, str):
-            # return data[::-1]
-            data = data.encode()
-            binary = ""
-            for hex in data:
-                binary += bin(hex)[2:]
-        else:
-            binary = bin(data)
+    def encode_ident(self, ident):
+        hash_integer = self.calculate_hash_and_extract_with_type(
+            ident, mask=self.IDENT_MASK)
+        return self.to_bin_string(hash_integer)
+
+    def to_bin_string(self, data):
+        assert (isinstance(data, int))
+        binary = bin(data)
         new_name = ""
         for b in binary:
             if b == "b":
                 continue
             new_name += (self.ZERO if b == "0" else self.ONE)
         return self.PREFIX + new_name
+
+    def calculate_hash_and_extract_with_type(self, input_value, mask=None):
+        # 型情報を文字列として取得
+        type_info = str(type(input_value))
+
+        # 値と型情報を組み合わせたバイト表現を作成
+        if isinstance(input_value, bytes):
+            # バイト列の場合は型情報のみを使用
+            value_bytes = type_info.encode()
+        else:
+            # その他の型の場合は値と型情報を組み合わせる
+            value_bytes = (str(input_value) + type_info).encode()
+
+        # ハッシュ値を計算
+        hash_value = self.sha256(value_bytes).hexdigest()
+
+        # ハッシュ値の下4桁を取り出し
+        last_four_digits = hash_value[-4:]
+        last_four_digits_int = int(last_four_digits, 16)
+
+        if mask is not None:
+            last_four_digits_int = last_four_digits_int ^ mask
+
+        return last_four_digits_int
 
     def create_decrypt_function(self, encrypted_value, original_value, const_type):
         n = self.ast.FunctionDef(name=encrypted_value, args=self.ast.arguments(
@@ -88,7 +94,8 @@ class Encoder():
         for char in input_str:
             char_code = ord(char)
             if self.encrypt_builtins:
-                program_parts.append(f"{builtin_encode('chr')}({char_code})")
+                program_parts.append(
+                    f"{builtin_encode('chr', self.ZERO, self.ONE, self.PREFIX)}({char_code})")
             else:
                 program_parts.append(f"chr({char_code})")
 
@@ -126,7 +133,7 @@ class Encoder():
 
     def generate_code_for_None(self):
         if self.encrypt_builtins:
-            program = f"\nreturn {builtin_encode('exec')}('')"
+            program = f"\nreturn {builtin_encode('exec', self.ZERO, self.ONE, self.PREFIX)}('')"
         else:
             program = f"\nreturn exec('')"
         return program

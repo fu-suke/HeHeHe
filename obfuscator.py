@@ -10,9 +10,15 @@ class Obfuscator(ast.NodeTransformer):
     def __init__(self, code,
                  encrypt_idents=True,
                  encrypt_consts=True,
-                 encrypt_builtins=False
+                 encrypt_builtins=False,
+                 zero="0",
+                 one="O",
+                 prefix="O",
                  ):
+        assert (len(zero) == 1 and len(one) == 1 and len(prefix) == 1,
+                "zero, one, prefix must be one character")
         self.code = code
+        self.ZERO, self.ONE, self.PREFIX = zero, one, prefix
         self.tree = ast.parse(code)
         self.encrypted_idents = {}  # 元の識別子名: 暗号化後の識別子名
         self.imported_modules = []
@@ -29,8 +35,13 @@ class Obfuscator(ast.NodeTransformer):
         self.encrypt_idents = encrypt_idents
         self.encrypt_consts = encrypt_consts
         self.encrypt_builtins = encrypt_builtins
-        self.encoder = Encoder(encrypt_builtins=encrypt_builtins)
-        # print(ast.dump(self.tree, indent=4))
+        self.encoder = Encoder(
+            zero=self.ZERO,
+            one=self.ONE,
+            prefix=self.PREFIX,
+            encrypt_builtins=encrypt_builtins,
+        )
+        print(ast.dump(self.tree, indent=4))
         # print("=====================================")
 
     def obfuscate(self):
@@ -265,7 +276,7 @@ class Obfuscator(ast.NodeTransformer):
             return name
         if name.startswith("__"):
             return name
-        encrypted_variableName = self.encoder.encode(name)
+        encrypted_variableName = self.encoder.encode_ident(name)
         self.encrypted_idents[name] = encrypted_variableName
         return encrypted_variableName
 
@@ -285,30 +296,34 @@ class Obfuscator(ast.NodeTransformer):
 
         # 組み込み名：暗号化後の組み込み名の辞書を作成
         for k, v in globals_["__builtins__"].items():
-            new_name = builtin_encode(k)
+            new_name = builtin_encode(k, self.ZERO, self.ONE, self.PREFIX)
             self.builtin_dict[k] = new_name
 
     def insert_encrypt_builtins(self):
+        if self.PREFIX:
+            prefix = "_chr(" + str(ord(self.PREFIX)) + ")+"
+        else:
+            prefix = ""
 
         # ToDo:builtin_dictの中身をシャッフル
-        code = """
-globals_, locals_ = {}, {}
+        code = f"""
+globals_, locals_ = {{}}, {{}}
 exec("", globals_, locals_)
-temp_dict = {}
+temp_dict = {{}}
 
 for k, v in globals_.items():
     builtin_str = k
 builtins_ = list(globals_[builtin_str].items())
-builtin_chr = builtins_[14][1]
-builtin_enumerate = builtins_[61][1]
-builtin_list = builtins_[67][1]
-builtin_range = builtins_[70][1]
+_chr = builtins_[14][1]
+_enumerate = builtins_[61][1]
+_list = builtins_[67][1]
+_range = builtins_[70][1]
 
 
 def builtin_encode(builtin_funcName):
-    binary = "".join(["".join([builtin_chr(48) if (byte >> i) & 1 == 0 else builtin_chr(49) for i in builtin_range(
+    binary = "".join(["".join([_chr(48) if (byte >> i) & 1 == 0 else _chr(49) for i in _range(
         7, -1, -1)]) for byte in builtin_funcName.encode()])
-    return "".join([builtin_chr(12411) if b == builtin_chr(48) else builtin_chr(12370) for b in binary])
+    return {prefix}"".join([_chr({ord(self.ZERO)}) if b == _chr(48) else _chr({ord(self.ONE)}) for b in binary])
 
 
 for k, v in globals_[builtin_str].items():

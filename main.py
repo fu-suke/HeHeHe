@@ -21,12 +21,20 @@ def main():
     #                 f.write(obfuscated_code)
 
     # 単体テスト用
-    o = Obfuscator(code, encrypt_idents=True,
-                   encrypt_consts=True,
-                   encrypt_builtins=True)
+    o = Obfuscator(
+        code,
+        encrypt_idents=True,
+        encrypt_consts=True,
+        encrypt_builtins=True,
+        zero="0",
+        one="O",
+        prefix="O",
+    )
     with open("dst.py", "w", encoding="utf-8") as f:
         f.write(o.obfuscate())
 
 
 if __name__ == "__main__":
     main()
+
+# str, int, bool, float, None, bytes, ...
