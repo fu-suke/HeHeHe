@@ -20,7 +20,6 @@ def main():
     #                 obfuscated_code = o.obfuscate()
     #                 f.write(obfuscated_code)
 
-    # 単体テスト用
     o = Obfuscator(
         code,
         encrypt_idents=True,

@@ -330,9 +330,9 @@ for k, v in globals_[builtin_str].items():
     temp_dict[builtin_encode(k)] = v
 globals_[builtin_str].update(temp_dict)
 globals_["__builtins__"][builtin_encode("__name__")] = "__main__"
-lst = ["print"]
-for builtin_funcName in lst:
-    globals_["__builtins__"][builtin_funcName] = None
+# lst = ["print"]
+# for builtin_funcName in lst:
+#     globals_["__builtins__"][builtin_funcName] = None
 
 # globals_["__builtins__"]["print"] = None
 # globals_["__builtins__"]["type"] = None
