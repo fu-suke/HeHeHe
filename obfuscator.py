@@ -110,8 +110,8 @@ class Obfuscator(ast.NodeTransformer):
 
     def visit_Name(self, node: ast.Name) -> Any:
         # オプションがOFFの場合は何もしない
-        if not self.encrypt_idents:
-            return node
+        # if not self.encrypt_idents:
+        #     return node
         node.id = self.encrypt_ident(node.id)
         return node
 

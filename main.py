@@ -22,8 +22,8 @@ def main():
 
     o = Obfuscator(
         code,
-        encrypt_idents=True,
-        encrypt_consts=True,
+        # encrypt_idents=False,
+        # encrypt_consts=False,
         encrypt_builtins=True,
         zero="0",
         one="O",
