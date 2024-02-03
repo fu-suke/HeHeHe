@@ -1,15 +1,15 @@
 from builtin_encode import builtin_encode
+import re
+import unicodedata
 
 
 class Encoder():
     import math
     import random
     import ast
-    import struct
     from hashlib import sha256
 
     IDENT_MASK = 12345
-# ToDo: 文字列を小さくする
 
     def __init__(self, zero, one, prefix, encrypt_builtins=False):
         self.ZERO = zero
@@ -24,7 +24,10 @@ class Encoder():
     def encode_ident(self, ident):
         hash_integer = self.calculate_hash_and_extract_with_type(
             ident, mask=self.IDENT_MASK)
-        return self.to_bin_string(hash_integer)
+        new_name = self.PREFIX + self.to_bin_string(hash_integer)
+        assert self.is_valid_python_identifier(
+            new_name), f"Invalid identifier: {new_name}"
+        return new_name
 
     def to_bin_string(self, data):
         assert (isinstance(data, int))
@@ -37,7 +40,6 @@ class Encoder():
         return self.PREFIX + new_name
 
     def calculate_hash_and_extract_with_type(self, input_value, mask=None):
-        # 型情報を文字列として取得
         type_info = str(type(input_value))
 
         # 値と型情報を組み合わせたバイト表現を作成
@@ -103,11 +105,9 @@ class Encoder():
         return "return " + program
 
     def generate_code_for_integer(self, num):
-        import random
-        # 複数のランダムな大きな数を生成
-        num1 = random.randint(100000, 999999)
-        num2 = random.randint(100000, 999999)
-        num3 = random.randint(100000, 999999)
+        num1 = self.random.randint(100000, 999999)
+        num2 = self.random.randint(100000, 999999)
+        num3 = self.random.randint(100000, 999999)
 
         step1 = num ^ num1
         step2 = step1 + num2
@@ -127,7 +127,6 @@ class Encoder():
         mantissa_calc = f"({mantissa} * {power_of_two}) / {power_of_two}"
         exponent_calc = f"({exponent} + 1)"
 
-        # 元の浮動小数点数を再構築するコードを生成
         program = f"import math\nreturn math.ldexp({mantissa_calc}, {exponent_calc})"
         return program
 
@@ -137,3 +136,17 @@ class Encoder():
         else:
             program = f"\nreturn exec('')"
         return program
+
+    def is_valid_python_identifier(self, name):
+        if not name:
+            return False
+        if not re.match(r'\w', name[0], re.UNICODE):  # 最初の文字が\w（ワード文字）に一致するかチェック
+            return False
+        # その後の文字が\wに一致するかチェック
+        if not all(re.match(r'\w', char, re.UNICODE) for char in name[1:]):
+            return False
+        if unicodedata.category(name[0]) not in ('Ll', 'Lu', 'Lt', 'Lm', 'Lo', 'Nl', '_'):
+            return False
+        if not all(unicodedata.category(char) in ('Ll', 'Lu', 'Lt', 'Lm', 'Lo', 'Nl', 'Mn', 'Mc', 'Nd', 'Pc', '_') for char in name[1:]):
+            return False
+        return True

@@ -15,8 +15,9 @@ class Obfuscator(ast.NodeTransformer):
                  one="O",
                  prefix="O",
                  ):
-        assert (len(zero) == 1 and len(one) == 1 and len(prefix) == 1,
-                "zero, one, prefix must be one character")
+        assert len(zero) >= 1
+        assert len(one) >= 1
+
         self.code = code
         self.ZERO, self.ONE, self.PREFIX = zero, one, prefix
         self.tree = ast.parse(code)
@@ -324,19 +325,15 @@ def builtin_encode(builtin_funcName):
     binary = "".join(["".join([_chr(48) if (byte >> i) & 1 == 0 else _chr(49) for i in _range(
         7, -1, -1)]) for byte in builtin_funcName.encode()])
     return {prefix}"".join([_chr({ord(self.ZERO)}) if b == _chr(48) else _chr({ord(self.ONE)}) for b in binary])
-
+    # return builtin_funcName
 
 for k, v in globals_[builtin_str].items():
     temp_dict[builtin_encode(k)] = v
 globals_[builtin_str].update(temp_dict)
 globals_["__builtins__"][builtin_encode("__name__")] = "__main__"
-# lst = ["print"]
-# for builtin_funcName in lst:
-#     globals_["__builtins__"][builtin_funcName] = None
 
-# globals_["__builtins__"]["print"] = None
-# globals_["__builtins__"]["type"] = None
 """
+
         tmp_tree = ast.parse(code)
 
         tmp_tree.body.reverse()
