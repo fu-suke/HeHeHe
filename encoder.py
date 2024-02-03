@@ -1,58 +1,66 @@
 from builtin_encode import builtin_encode
+import re
+import unicodedata
 
 
 class Encoder():
     import math
     import random
     import ast
-    import struct
+    from hashlib import sha256
 
-    INTEGER_MASK = 1234567890
-    FLOAT_MASK = 5432160987
-    STRING_MASK = 9523045671
-    BOOLEAN_MASK = 2058934567
-    NONE_MASK = 6508934127
+    IDENT_MASK = 12345
 
-    def __init__(self, prefix="O", zero="0", one="O", encrypt_builtins=False):
-        self.PREFIX = prefix
+    def __init__(self, zero, one, prefix, encrypt_builtins=False):
         self.ZERO = zero
         self.ONE = one
+        self.PREFIX = prefix
         self.encrypt_builtins = encrypt_builtins
 
     def encode_const(self, const):
-        const_type = type(const)
-        if const is None:
-            const = self.NONE_MASK
-        elif const_type == str:
-            pass
-        elif const_type == int:
-            const = const ^ self.INTEGER_MASK
-        elif const_type == float:
-            # 浮動小数点数をビット表現に変換し、整数として解釈
-            const = self.struct.unpack('!I',
-                                       self.struct.pack('!f', const))[0] ^ self.FLOAT_MASK
-        elif const_type == bool:
-            const = const ^ self.BOOLEAN_MASK
-        else:
-            raise ValueError(f"Unknown type: {type(const)}")
-        return self.encode(const)
+        hash_integer = self.calculate_hash_and_extract_with_type(const)
+        return self.to_bin_string(hash_integer)
 
-    def encode(self, data):
-        assert (isinstance(data, int) or isinstance(data, str))
-        if isinstance(data, str):
-            # return data[::-1]
-            data = data.encode()
-            binary = ""
-            for hex in data:
-                binary += bin(hex)[2:]
-        else:
-            binary = bin(data)
+    def encode_ident(self, ident):
+        hash_integer = self.calculate_hash_and_extract_with_type(
+            ident, mask=self.IDENT_MASK)
+        new_name = self.PREFIX + self.to_bin_string(hash_integer)
+        assert self.is_valid_python_identifier(
+            new_name), f"Invalid identifier: {new_name}"
+        return new_name
+
+    def to_bin_string(self, data):
+        assert (isinstance(data, int))
+        binary = bin(data)
         new_name = ""
         for b in binary:
             if b == "b":
                 continue
             new_name += (self.ZERO if b == "0" else self.ONE)
         return self.PREFIX + new_name
+
+    def calculate_hash_and_extract_with_type(self, input_value, mask=None):
+        type_info = str(type(input_value))
+
+        # 値と型情報を組み合わせたバイト表現を作成
+        if isinstance(input_value, bytes):
+            # バイト列の場合は型情報のみを使用
+            value_bytes = type_info.encode()
+        else:
+            # その他の型の場合は値と型情報を組み合わせる
+            value_bytes = (str(input_value) + type_info).encode()
+
+        # ハッシュ値を計算
+        hash_value = self.sha256(value_bytes).hexdigest()
+
+        # ハッシュ値の下4桁を取り出し
+        last_four_digits = hash_value[-4:]
+        last_four_digits_int = int(last_four_digits, 16)
+
+        if mask is not None:
+            last_four_digits_int = last_four_digits_int ^ mask
+
+        return last_four_digits_int
 
     def create_decrypt_function(self, encrypted_value, original_value, const_type):
         n = self.ast.FunctionDef(name=encrypted_value, args=self.ast.arguments(
@@ -88,7 +96,8 @@ class Encoder():
         for char in input_str:
             char_code = ord(char)
             if self.encrypt_builtins:
-                program_parts.append(f"{builtin_encode('chr')}({char_code})")
+                program_parts.append(
+                    f"{builtin_encode('chr', self.ZERO, self.ONE, self.PREFIX)}({char_code})")
             else:
                 program_parts.append(f"chr({char_code})")
 
@@ -96,11 +105,9 @@ class Encoder():
         return "return " + program
 
     def generate_code_for_integer(self, num):
-        import random
-        # 複数のランダムな大きな数を生成
-        num1 = random.randint(100000, 999999)
-        num2 = random.randint(100000, 999999)
-        num3 = random.randint(100000, 999999)
+        num1 = self.random.randint(100000, 999999)
+        num2 = self.random.randint(100000, 999999)
+        num3 = self.random.randint(100000, 999999)
 
         step1 = num ^ num1
         step2 = step1 + num2
@@ -120,13 +127,26 @@ class Encoder():
         mantissa_calc = f"({mantissa} * {power_of_two}) / {power_of_two}"
         exponent_calc = f"({exponent} + 1)"
 
-        # 元の浮動小数点数を再構築するコードを生成
         program = f"import math\nreturn math.ldexp({mantissa_calc}, {exponent_calc})"
         return program
 
     def generate_code_for_None(self):
         if self.encrypt_builtins:
-            program = f"\nreturn {builtin_encode('exec')}('')"
+            program = f"\nreturn {builtin_encode('exec', self.ZERO, self.ONE, self.PREFIX)}('')"
         else:
             program = f"\nreturn exec('')"
         return program
+
+    def is_valid_python_identifier(self, name):
+        if not name:
+            return False
+        if not re.match(r'\w', name[0], re.UNICODE):  # 最初の文字が\w（ワード文字）に一致するかチェック
+            return False
+        # その後の文字が\wに一致するかチェック
+        if not all(re.match(r'\w', char, re.UNICODE) for char in name[1:]):
+            return False
+        if unicodedata.category(name[0]) not in ('Ll', 'Lu', 'Lt', 'Lm', 'Lo', 'Nl', '_'):
+            return False
+        if not all(unicodedata.category(char) in ('Ll', 'Lu', 'Lt', 'Lm', 'Lo', 'Nl', 'Mn', 'Mc', 'Nd', 'Pc', '_') for char in name[1:]):
+            return False
+        return True
