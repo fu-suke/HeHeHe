@@ -2,6 +2,17 @@ from obfuscator import Obfuscator
 import argparse
 
 
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() == 'true':
+        return True
+    elif v.lower() == 'false':
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
 def main(input_file, output_file, encrypt_idents, encrypt_consts, encrypt_builtins, zero, one, prefix):
     with open(input_file, "r", encoding="utf-8") as f:
         code = f.read()
@@ -21,20 +32,27 @@ def main(input_file, output_file, encrypt_idents, encrypt_consts, encrypt_builti
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="コードの難読化ツール")
-    parser.add_argument("input_file", help="難読化するソースコードのファイルパス")
-    parser.add_argument("output_file", help="難読化されたコードを保存するファイルパス")
-    parser.add_argument("--encrypt_idents", action='store_true',
-                        default=True, help="識別子の難読化を有効にする（デフォルト：ON）")
-    parser.add_argument("--encrypt_consts", action='store_true',
-                        default=True, help="定数の難読化を有効にする（デフォルト：ON）")
-    parser.add_argument("--encrypt_builtins", action='store_true',
-                        default=False, help="組み込み関数の難読化を有効にする（デフォルト：OFF）")
-    parser.add_argument("--zero", default="へ", help="難読化に使用する '0' の代替文字")
-    parser.add_argument("--one", default="ヘ", help="難読化に使用する '1' の代替文字")
-    parser.add_argument("--prefix", default="", help="識別子に付加するプレフィックス")
+    parser = argparse.ArgumentParser(description="HeHeHe Obfuscator")
+    parser.add_argument(
+        "input_file", help="File path to the Python code to obfuscate")
+    parser.add_argument(
+        "-o", "--output-file", default="out.py", help="Output file path (default: out.py)")
+    parser.add_argument("-i", "--encrypt-idents", type=str2bool, choices=[True, False], default=True,
+                        help="Enables identifier obfuscation (default: ON)")
+    parser.add_argument("-c", "--encrypt-consts", type=str2bool, choices=[True, False], default=True,
+                        help="Enables constant obfuscation (default: ON)")
+    parser.add_argument("-b", "--encrypt-builtins", type=str2bool, choices=[True, False], default=False,
+                        help="Enables obfuscation of built-in functions and classes (default: OFF)")
+    parser.add_argument("--zero", default="へ",
+                        help="Obfuscation character for '0'")
+    parser.add_argument("--one", default="ヘ",
+                        help="Obfuscation character for '1'")
+    parser.add_argument("--prefix", default="",
+                        help="Prefix for obfuscated identifiers")
 
     args = parser.parse_args()
 
     main(args.input_file, args.output_file, args.encrypt_idents,
          args.encrypt_consts, args.encrypt_builtins, args.zero, args.one, args.prefix)
+
+    print("Obfuscation completed!:", args.input_file, "->", args.output_file)

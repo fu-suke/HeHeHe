@@ -45,7 +45,8 @@ def main():
     print("Incremented: ", increment(9))
 
     for square in generate_squares(5):
-        print("Square: ", square)
+        pass
+    print("Square: ", square)
 
 
 if __name__ == "__main__":
