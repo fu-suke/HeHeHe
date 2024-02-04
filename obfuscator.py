@@ -42,7 +42,7 @@ class Obfuscator(ast.NodeTransformer):
             prefix=self.PREFIX,
             encrypt_builtins=encrypt_builtins,
         )
-        print(ast.dump(self.tree, indent=4))
+        # print(ast.dump(self.tree, indent=4))
         # print("=====================================")
 
     def obfuscate(self):
